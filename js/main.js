@@ -145,13 +145,13 @@ class Entity {
     const chr = time.charAt(this.chr);
 
     // If this entity is not needed to display the character, it is hidden
-    if (this.segment > relCoor[chr].length) {
+    if (this.segment >= relCoor[chr].length) {
       this.visible = false;
       return;
     }
 
-    this.tx += relCoor[chr][segment][0] * scale;
-    this.ty += relCoor[chr][segment][1] * scale;
+    this.tx += relCoor[chr][this.segment][0] * scale;
+    this.ty += relCoor[chr][this.segment][1] * scale;
 
     // If mouse is being held, the entity will point and travel towards the mouse, else to its designated position
     // This is calculates the angle of the endpoint relative the starting point in the clockwise direction using inverse tangent
@@ -183,10 +183,10 @@ class Entity {
 
 const entityArray = [];
 
-// For every character (7 of them), they use up a maximum of 13 out of 15 segments of the 3 by 5 grid
+// For every character (8 of them), they use up a maximum of 13 out of 15 segments of the 3 by 5 grid
 // Hence the following values
-for (let chr = 0; chr <= 7; chr++) {
-  for (let segment = 1; segment <= 13; segment++) {
+for (let chr = 0; chr < 8; chr++) {
+  for (let segment = 0; segment < 13; segment++) {
     entityArray.push(new Entity(chr, segment))
   }
 }
