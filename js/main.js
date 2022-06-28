@@ -1,6 +1,9 @@
 const cvs = document.querySelector('canvas');
 const c = cvs.getContext('2d');
 
+let running = false;
+let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
 cvs.width = window.innerWidth;
 cvs.height = window.innerHeight;
 
@@ -15,6 +18,19 @@ window.addEventListener('mousemove', e => {
   mouse.x = e.x;
   mouse.y = e.y;
 });
+
+window.addEventListener('mousedown', e => {
+  if (!running) {
+    running = true;
+    const audio = new Audio("audio/background2.mp3");
+    audio.autoplay = true;
+    audio.loop = true;
+
+    c.clearRect(0, 0, window.innerWidth, window.innerHeight);
+
+    animate();
+  }
+})
 
 let mouseDown = 0;
 
@@ -43,22 +59,36 @@ let imageNumber = 0;
 
 // Constant modifier variables
 const speed = 5;
-const friction = 85;
-const scale = 50;
-const pad = 20;
-const radius = 20;
+const friction = isMobile ? 77 : 85;
+const scale = isMobile ? 25 : 50;
+const pad = isMobile ? 10 : 20;
+const radius = isMobile ? 10: 20;
 
 // Preloading each character's position relative to canvas size
-const unit = cvs.width / 3;
-const left = (unit - scale * 6 - pad) / 2 + scale * 3 / 2;
-const right = left + scale * 3 + pad;
-const centerY = cvs.height / 2;
-const chrCoor =
+let chrCoor;
+
+if (isMobile) {
+  const centerWidth = cvs.width / 2;
+  const w1 = centerWidth - pad / 2 - scale * 3 / 2;
+  const w2 = centerWidth + pad / 2 + scale * 3 / 2;
+  const unit = cvs.height / 3;
+  const top = unit / 2;
+  chrCoor =
+    [[w1, top], [w2, top], // HOURS
+     [w1, top + unit], [w2, top + unit], // MINUTES
+     [w1, top + unit * 2], [w2, top + unit * 2]]; // SECONDS
+} else {
+  const unit = cvs.width / 3;
+  const left = (unit - scale * 6 - pad) / 2 + scale * 3 / 2;
+  const right = left + scale * 3 + pad;
+  const centerY = cvs.height / 2;
+  chrCoor =
     [[left, centerY], [right, centerY], // HOURS
-    [unit, centerY], // Separator
-    [left + unit, centerY], [right + unit, centerY], // MINUTES
-    [unit * 2, centerY], // Separator
-    [left + unit * 2, centerY], [right + unit * 2, centerY]]; // SECONDS
+      [unit, centerY], // Separator
+      [left + unit, centerY], [right + unit, centerY], // MINUTES
+      [unit * 2, centerY], // Separator
+      [left + unit * 2, centerY], [right + unit * 2, centerY]]; // SECONDS
+}
 
 // Relative coordinate of each dot for all displayable numbers or symbols on a 3 by 5 grid
 const relCoor =
@@ -185,7 +215,7 @@ const entityArray = [];
 
 // For every character (8 of them), they use up a maximum of 13 out of 15 segments of the 3 by 5 grid
 // Hence the following values
-for (let chr = 0; chr < 8; chr++) {
+for (let chr = 0; chr < (isMobile ? 6 : 8); chr++) {
   for (let segment = 0; segment < 13; segment++) {
     entityArray.push(new Entity(chr, segment))
   }
@@ -207,7 +237,33 @@ function loadImage(src) {
   Updates the time string with the format: HH:MM:SS
  */
 function updateTime() {
-  time = new Date().toTimeString().split(' ')[0];
+  if (isMobile) {
+    const date = new Date();
+    time = date.getHours().toString().padStart(2, '0') + date.getMinutes().toString().padStart(2, '0') + date.getSeconds().toString().padStart(2, '0');
+  }
+  else time = new Date().toTimeString().split(' ')[0];
+}
+
+function renderStart() {
+  c.beginPath();
+  const display = new Image();
+  display.src = "img/start.png";
+  display.onload = () => {
+    c.shadowColor = "black";
+    c.shadowBlur = 10;
+    c.shadowOffsetX = 10;
+    c.shadowOffsetY = 10;
+    c.drawImage(display, cvs.width / 2 - display.width / 2, cvs.height / 2 - display.height / 2);
+
+    c.font = "20px Quantum"
+    c.fillStyle = "white"
+    c.textAlign = "center"
+    c.fillText("[Space] - Change Texture", cvs.width / 2, cvs.height / 2 - 70);
+    c.fillText("[R] - Random Scatter", cvs.width / 2, cvs.height / 2 - 35);
+    c.fillText("[RMB] - Attraction", cvs.width / 2, cvs.height / 2);
+    c.fillText("Touching mouse will scatter the dot!", cvs.width / 2, cvs.height / 2 + 35);
+    c.fillText("Click anywhere to start!", cvs.width / 2, cvs.height / 2 + 70);
+  }
 }
 
 /*
@@ -229,7 +285,7 @@ function animate() {
   requestAnimationFrame(animate);
   c.clearRect(0, 0, window.innerWidth, window.innerHeight);
   entityArray.forEach(entity => entity.draw());
-  renderText();
+  if (!isMobile) renderText();
 }
 
-animate();
+renderStart()
